@@ -102,6 +102,7 @@ def fetch_events(for_date):
                             summary = str(vevent.summary.value) if hasattr(vevent, 'summary') else 'No title'
                             dtstart = vevent.dtstart.value
                             dtend = vevent.dtend.value if hasattr(vevent, 'dtend') else None
+                            duration = vevent.duration.value if hasattr(vevent, 'duration') else None
 
                             if isinstance(dtstart, date) and not isinstance(dtstart, datetime):
                                 events.append({
@@ -113,7 +114,12 @@ def fetch_events(for_date):
                                 })
                             else:
                                 start_local = to_local_datetime(dtstart)
-                                end_local = to_local_datetime(dtend) if dtend else start_local + timedelta(hours=1)
+                                if dtend:
+                                    end_local = to_local_datetime(dtend)
+                                elif duration:
+                                    end_local = start_local + duration
+                                else:
+                                    end_local = start_local + timedelta(hours=1)
                                 events.append({
                                     'time': start_local.strftime('%H:%M'), 'title': summary,
                                     'start': start_local, 'end': end_local, 'is_all_day': False,
