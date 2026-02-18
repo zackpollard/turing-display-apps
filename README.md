@@ -63,6 +63,39 @@ python apps/calendar/calendar_display.py
    from library.lcd.lcd_comm_rev_a import LcdCommRevA
    ```
 
+## Future App Ideas
+
+Potential apps that could be added:
+
+**Productivity**
+- Meeting countdown - prominent timer until next calendar event
+- Task list - Todoist integration with today's tasks
+- Pomodoro timer - work/break session tracking
+- GitHub notifications - PRs awaiting review, CI build status
+
+**Information**
+- Weather - current conditions, hourly forecast, rain probability
+- Public transit - next bus/train departures for your commute
+- Package tracking - delivery status from various carriers
+- News/RSS - scrolling headlines from your feeds
+
+**Home & Environment**
+- Home Assistant - temperature sensors, device status, doorbell alerts
+- Air quality - indoor/outdoor AQI monitoring
+- Smart home status - lights, locks, thermostat overview
+
+**Communication**
+- Email summary - unread counts per account
+- Slack/Discord - notification summary and status
+
+**Health**
+- Hydration/stretch reminders - periodic prompts
+- Standing desk timer - sit/stand interval tracking
+
+**Entertainment**
+- Spotify now playing - track info with album art
+- Photo frame - cycling through images from a folder
+
 ## License
 
 This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
