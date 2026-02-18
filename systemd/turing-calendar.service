@@ -1,0 +1,13 @@
+[Unit]
+Description=Turing Display - Calendar
+After=default.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/zack/Source/turing-display-apps
+ExecStart=/usr/bin/sg uucp -c '/home/zack/Source/turing-display-apps/venv/bin/python apps/calendar/calendar_display.py'
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
