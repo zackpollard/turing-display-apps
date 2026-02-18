@@ -4,8 +4,8 @@ After=default.target
 
 [Service]
 Type=simple
-WorkingDirectory=/home/zack/Source/turing-display-apps
-ExecStart=/usr/bin/sg uucp -c '/home/zack/Source/turing-display-apps/venv/bin/python apps/calendar/calendar_display.py'
+WorkingDirectory=%h/Source/turing-display-apps
+ExecStart=%h/Source/turing-display-apps/venv/bin/python apps/calendar/calendar_display.py
 Restart=on-failure
 RestartSec=5
 
