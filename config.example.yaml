@@ -1,0 +1,23 @@
+# Fastmail Calendar Display Configuration
+# Copy this file to config.yaml and fill in your credentials
+
+# Fastmail accounts (add as many as needed)
+accounts:
+  - email: "your-email@fastmail.com"
+    password: "your-app-password"
+  # - email: "another@fastmail.com"
+  #   password: "another-app-password"
+
+# Display settings
+display:
+  # Serial port - use AUTO for auto-detection, or specify like /dev/ttyACM0 or COM3
+  com_port: "AUTO"
+  # Brightness 0-100 (warning: high brightness can cause heat on Rev A displays)
+  brightness: 50
+
+# Calendar settings
+calendar:
+  # How often to refresh events from server (seconds)
+  refresh_interval: 300
+  # Show tomorrow's events when today has this many or fewer remaining
+  tomorrow_threshold: 5
