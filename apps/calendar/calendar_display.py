@@ -5,7 +5,9 @@ import sys
 import os
 
 # Add the submodule to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'lib', 'turing-smart-screen'))
+APP_DIR = os.path.dirname(__file__)
+ROOT_DIR = os.path.dirname(os.path.dirname(APP_DIR))
+sys.path.insert(0, os.path.join(ROOT_DIR, 'lib', 'turing-smart-screen'))
 
 import caldav
 import yaml
@@ -18,7 +20,7 @@ import numpy as np
 
 # Load configuration
 def load_config():
-    config_path = os.path.join(os.path.dirname(__file__), 'config.yaml')
+    config_path = os.path.join(APP_DIR, 'config.yaml')
     with open(config_path, 'r') as f:
         return yaml.safe_load(f)
 
@@ -55,7 +57,7 @@ EVENTS_START_Y = 148
 ROW_HEIGHT = 48
 
 # Font paths (relative to submodule)
-FONT_DIR = os.path.join(os.path.dirname(__file__), 'lib', 'turing-smart-screen', 'res', 'fonts')
+FONT_DIR = os.path.join(ROOT_DIR, 'lib', 'turing-smart-screen', 'res', 'fonts')
 
 
 def truncate_text(text, font, max_width):
