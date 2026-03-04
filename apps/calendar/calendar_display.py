@@ -243,8 +243,10 @@ def draw_screen(now, events, flash_on, fonts):
                 title_color = TEXT_COLOR
 
             draw.text((25, text_y), event['time'], fill=color, font=fonts['event_time'], anchor='lm')
-            title = truncate_text(event['title'], fonts['event'], 200)
-            draw.text((95, text_y), title, fill=title_color, font=fonts['event'], anchor='lm')
+            time_width = fonts['event_time'].getlength(event['time'])
+            title_x = max(95, 25 + int(time_width) + 10)
+            title = truncate_text(event['title'], fonts['event'], 300 - title_x)
+            draw.text((title_x, text_y), title, fill=title_color, font=fonts['event'], anchor='lm')
             draw.line([(20, row_bottom), (300, row_bottom)], fill=LINE_COLOR_DARK, width=1)
 
         row_index += 1
