@@ -247,7 +247,7 @@ def draw_screen(now, events, flash_on, fonts):
             elif state == 'tomorrow':
                 text_color = ac.get('tomorrow', TOMORROW_COLOR)
             else:
-                text_color = ac.get('normal', TIME_COLOR)
+                text_color = ac.get('today', TIME_COLOR)
             color = text_color
             title_color = text_color
 

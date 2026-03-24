@@ -6,7 +6,7 @@ accounts:
   - email: "your-email@fastmail.com"
     password: "your-app-password"
     # colors:                          # optional per-account color overrides (RGB)
-    #   normal: [100, 200, 255]        # today's events
+    #   today: [100, 200, 255]         # today's events
     #   tomorrow: [140, 100, 200]      # tomorrow's events
     #   active: [50, 255, 100]         # currently happening
     #   active_bg: [30, 60, 40]        # active event background
