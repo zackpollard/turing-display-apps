@@ -25,7 +25,11 @@ def load_config():
         return yaml.safe_load(f)
 
 CONFIG = load_config()
-ACCOUNTS = [(acc['email'], acc['password'], acc.get('color')) for acc in CONFIG['accounts']]
+def parse_account_colors(acc):
+    colors = acc.get('colors', {})
+    return {k: tuple(v) for k, v in colors.items()} if colors else {}
+
+ACCOUNTS = [(acc['email'], acc['password'], parse_account_colors(acc)) for acc in CONFIG['accounts']]
 
 # Display settings
 COM_PORT = CONFIG['display'].get('com_port', 'AUTO')
@@ -114,7 +118,7 @@ def fetch_events(for_date):
                                     'end': datetime.combine(dtstart, datetime.max.time()),
                                     'is_all_day': True,
                                     'is_tomorrow': for_date != date.today(),
-                                    'color': account_color,
+                                    'colors': account_color,
                                 })
                             else:
                                 start_local = to_local_datetime(dtstart)
@@ -128,7 +132,7 @@ def fetch_events(for_date):
                                     'time': start_local.strftime('%H:%M'), 'title': summary,
                                     'start': start_local, 'end': end_local, 'is_all_day': False,
                                     'is_tomorrow': for_date != date.today(),
-                                    'color': account_color,
+                                    'colors': account_color,
                                 })
                         except:
                             pass
@@ -231,23 +235,23 @@ def draw_screen(now, events, flash_on, fonts):
             is_tomorrow = event.get('is_tomorrow', False)
             state = 'tomorrow' if is_tomorrow else get_event_state(event, now)
 
-            acc_color = tuple(event.get('color')) if event.get('color') else None
+            ac = event.get('colors', {})
 
             if state == 'active':
-                draw.rectangle([(20, row_top), (300, row_bottom)], fill=ACTIVE_BG)
-                color = acc_color or ACTIVE_COLOR
-                title_color = acc_color or ACTIVE_COLOR
+                draw.rectangle([(20, row_top), (300, row_bottom)], fill=ac.get('active_bg', ACTIVE_BG))
+                color = ac.get('active', ACTIVE_COLOR)
+                title_color = ac.get('active', ACTIVE_COLOR)
             elif state == 'upcoming':
-                bg = UPCOMING_BG if flash_on else UPCOMING_BG_OFF
+                bg = ac.get('upcoming_bg', UPCOMING_BG) if flash_on else ac.get('upcoming_bg_off', UPCOMING_BG_OFF)
                 draw.rectangle([(20, row_top), (300, row_bottom)], fill=bg)
-                color = acc_color or (UPCOMING_COLOR if flash_on else MUTED_COLOR)
+                color = ac.get('upcoming', UPCOMING_COLOR) if flash_on else MUTED_COLOR
                 title_color = color
             elif state == 'tomorrow':
-                color = acc_color or TOMORROW_TIME_COLOR
-                title_color = acc_color or TOMORROW_COLOR
+                color = ac.get('tomorrow_time', TOMORROW_TIME_COLOR)
+                title_color = ac.get('tomorrow', TOMORROW_COLOR)
             else:
-                color = acc_color or TIME_COLOR
-                title_color = acc_color or TEXT_COLOR
+                color = ac.get('time', TIME_COLOR)
+                title_color = ac.get('title', TEXT_COLOR)
 
             draw.text((25, text_y), event['time'], fill=color, font=fonts['event_time'], anchor='lm')
             time_width = fonts['event_time'].getlength(event['time'])

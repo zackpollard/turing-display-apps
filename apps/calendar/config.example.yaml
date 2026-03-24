@@ -5,7 +5,16 @@
 accounts:
   - email: "your-email@fastmail.com"
     password: "your-app-password"
-    # color: [255, 180, 100]  # optional RGB color for this account's events
+    # colors:                          # optional per-account color overrides (RGB)
+    #   time: [100, 200, 255]          # normal event time
+    #   title: [255, 255, 255]         # normal event title
+    #   active: [50, 255, 100]         # active event text
+    #   active_bg: [30, 60, 40]        # active event background
+    #   upcoming: [255, 200, 50]       # upcoming event text (flash on)
+    #   upcoming_bg: [60, 50, 20]      # upcoming event background (flash on)
+    #   upcoming_bg_off: [35, 30, 25]  # upcoming event background (flash off)
+    #   tomorrow_time: [140, 100, 200] # tomorrow event time
+    #   tomorrow: [180, 140, 255]      # tomorrow event title
   # - email: "another@fastmail.com"
   #   password: "another-app-password"
 
