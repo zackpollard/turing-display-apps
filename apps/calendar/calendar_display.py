@@ -32,7 +32,7 @@ COM_PORT = CONFIG['display'].get('com_port', 'AUTO')
 BRIGHTNESS = CONFIG['display'].get('brightness', 50)
 REFRESH_INTERVAL = CONFIG['calendar'].get('refresh_interval', 300)
 TOMORROW_THRESHOLD = CONFIG['calendar'].get('tomorrow_threshold', 5)
-EXCLUDED_CALENDARS = set(name.lower() for name in CONFIG['calendar'].get('excluded_calendars', []))
+EXCLUDED_CALENDARS = set(name.strip().lower() for name in CONFIG['calendar'].get('excluded_calendars', []))
 
 # Colors
 BG_COLOR = (20, 25, 35)
@@ -92,7 +92,7 @@ def fetch_events(for_date):
                 password=password,
             )
             for cal in client.principal().calendars():
-                if cal.name and cal.name.lower() in EXCLUDED_CALENDARS:
+                if cal.name and cal.name.strip().lower() in EXCLUDED_CALENDARS:
                     continue
                 try:
                     for event in cal.search(
