@@ -21,3 +21,6 @@ calendar:
   refresh_interval: 300
   # Show tomorrow's events when today has this many or fewer remaining
   tomorrow_threshold: 5
+  # Calendar names to exclude from display (case-insensitive)
+  excluded_calendars: []
+  # - "Holidays"
