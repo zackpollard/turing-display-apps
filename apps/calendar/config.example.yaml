@@ -5,6 +5,7 @@
 accounts:
   - email: "your-email@fastmail.com"
     password: "your-app-password"
+    # color: [255, 180, 100]  # optional RGB color for this account's events
   # - email: "another@fastmail.com"
   #   password: "another-app-password"
 

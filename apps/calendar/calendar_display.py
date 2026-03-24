@@ -25,7 +25,7 @@ def load_config():
         return yaml.safe_load(f)
 
 CONFIG = load_config()
-ACCOUNTS = [(acc['email'], acc['password']) for acc in CONFIG['accounts']]
+ACCOUNTS = [(acc['email'], acc['password'], acc.get('color')) for acc in CONFIG['accounts']]
 
 # Display settings
 COM_PORT = CONFIG['display'].get('com_port', 'AUTO')
@@ -84,7 +84,7 @@ def fetch_events(for_date):
     events = []
     next_day = for_date + timedelta(days=1)
 
-    for email, password in ACCOUNTS:
+    for email, password, account_color in ACCOUNTS:
         try:
             client = caldav.DAVClient(
                 url=f'https://caldav.fastmail.com/dav/calendars/user/{email}/',
@@ -114,6 +114,7 @@ def fetch_events(for_date):
                                     'end': datetime.combine(dtstart, datetime.max.time()),
                                     'is_all_day': True,
                                     'is_tomorrow': for_date != date.today(),
+                                    'color': account_color,
                                 })
                             else:
                                 start_local = to_local_datetime(dtstart)
@@ -127,6 +128,7 @@ def fetch_events(for_date):
                                     'time': start_local.strftime('%H:%M'), 'title': summary,
                                     'start': start_local, 'end': end_local, 'is_all_day': False,
                                     'is_tomorrow': for_date != date.today(),
+                                    'color': account_color,
                                 })
                         except:
                             pass
@@ -229,6 +231,8 @@ def draw_screen(now, events, flash_on, fonts):
             is_tomorrow = event.get('is_tomorrow', False)
             state = 'tomorrow' if is_tomorrow else get_event_state(event, now)
 
+            acc_color = tuple(event.get('color')) if event.get('color') else None
+
             if state == 'active':
                 draw.rectangle([(20, row_top), (300, row_bottom)], fill=ACTIVE_BG)
                 color = ACTIVE_COLOR
@@ -242,8 +246,8 @@ def draw_screen(now, events, flash_on, fonts):
                 color = TOMORROW_TIME_COLOR
                 title_color = TOMORROW_COLOR
             else:
-                color = TIME_COLOR
-                title_color = TEXT_COLOR
+                color = acc_color or TIME_COLOR
+                title_color = acc_color or TEXT_COLOR
 
             draw.text((25, text_y), event['time'], fill=color, font=fonts['event_time'], anchor='lm')
             time_width = fonts['event_time'].getlength(event['time'])
