@@ -235,16 +235,16 @@ def draw_screen(now, events, flash_on, fonts):
 
             if state == 'active':
                 draw.rectangle([(20, row_top), (300, row_bottom)], fill=ACTIVE_BG)
-                color = ACTIVE_COLOR
-                title_color = ACTIVE_COLOR
+                color = acc_color or ACTIVE_COLOR
+                title_color = acc_color or ACTIVE_COLOR
             elif state == 'upcoming':
                 bg = UPCOMING_BG if flash_on else UPCOMING_BG_OFF
                 draw.rectangle([(20, row_top), (300, row_bottom)], fill=bg)
-                color = UPCOMING_COLOR if flash_on else MUTED_COLOR
+                color = acc_color or (UPCOMING_COLOR if flash_on else MUTED_COLOR)
                 title_color = color
             elif state == 'tomorrow':
-                color = TOMORROW_TIME_COLOR
-                title_color = TOMORROW_COLOR
+                color = acc_color or TOMORROW_TIME_COLOR
+                title_color = acc_color or TOMORROW_COLOR
             else:
                 color = acc_color or TIME_COLOR
                 title_color = acc_color or TEXT_COLOR
