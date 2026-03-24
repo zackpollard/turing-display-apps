@@ -239,19 +239,17 @@ def draw_screen(now, events, flash_on, fonts):
 
             if state == 'active':
                 draw.rectangle([(20, row_top), (300, row_bottom)], fill=ac.get('active_bg', ACTIVE_BG))
-                color = ac.get('active', ACTIVE_COLOR)
-                title_color = ac.get('active', ACTIVE_COLOR)
+                text_color = ac.get('active', ACTIVE_COLOR)
             elif state == 'upcoming':
                 bg = ac.get('upcoming_bg', UPCOMING_BG) if flash_on else ac.get('upcoming_bg_off', UPCOMING_BG_OFF)
                 draw.rectangle([(20, row_top), (300, row_bottom)], fill=bg)
-                color = ac.get('upcoming', UPCOMING_COLOR) if flash_on else MUTED_COLOR
-                title_color = color
+                text_color = ac.get('upcoming', UPCOMING_COLOR) if flash_on else MUTED_COLOR
             elif state == 'tomorrow':
-                color = ac.get('tomorrow_time', TOMORROW_TIME_COLOR)
-                title_color = ac.get('tomorrow', TOMORROW_COLOR)
+                text_color = ac.get('tomorrow', TOMORROW_COLOR)
             else:
-                color = ac.get('time', TIME_COLOR)
-                title_color = ac.get('title', TEXT_COLOR)
+                text_color = ac.get('normal', TIME_COLOR)
+            color = text_color
+            title_color = text_color
 
             draw.text((25, text_y), event['time'], fill=color, font=fonts['event_time'], anchor='lm')
             time_width = fonts['event_time'].getlength(event['time'])
