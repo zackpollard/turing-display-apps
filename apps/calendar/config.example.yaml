@@ -32,7 +32,9 @@ calendar:
   # Calendar names to exclude from display (case-insensitive)
   excluded_calendars: []
   # - "Holidays"
-  # Your email addresses (used to check your RSVP status and hide declined events)
+  # Your email addresses (used to check your RSVP status on events)
   my_emails: []
   # - "you@example.com"
   # - "you@work.com"
+  # Hide events you have declined
+  hide_declined: false

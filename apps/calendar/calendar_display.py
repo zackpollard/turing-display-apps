@@ -38,6 +38,7 @@ REFRESH_INTERVAL = CONFIG['calendar'].get('refresh_interval', 300)
 TOMORROW_THRESHOLD = CONFIG['calendar'].get('tomorrow_threshold', 5)
 EXCLUDED_CALENDARS = set(name.strip().lower() for name in CONFIG['calendar'].get('excluded_calendars', []))
 MY_EMAILS = set(e.strip().lower() for e in CONFIG['calendar'].get('my_emails', []))
+HIDE_DECLINED = CONFIG['calendar'].get('hide_declined', False)
 
 # Colors
 BG_COLOR = (20, 25, 35)
@@ -120,6 +121,8 @@ def fetch_events(for_date):
                         try:
                             vevent = event.vobject_instance.vevent
                             partstat = get_my_partstat(vevent)
+                            if HIDE_DECLINED and partstat == 'DECLINED':
+                                continue
                             summary = str(vevent.summary.value) if hasattr(vevent, 'summary') else 'No title'
                             dtstart = vevent.dtstart.value
                             dtend = vevent.dtend.value if hasattr(vevent, 'dtend') else None
