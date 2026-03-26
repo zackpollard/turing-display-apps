@@ -37,6 +37,7 @@ BRIGHTNESS = CONFIG['display'].get('brightness', 50)
 REFRESH_INTERVAL = CONFIG['calendar'].get('refresh_interval', 300)
 TOMORROW_THRESHOLD = CONFIG['calendar'].get('tomorrow_threshold', 5)
 EXCLUDED_CALENDARS = set(name.strip().lower() for name in CONFIG['calendar'].get('excluded_calendars', []))
+MY_EMAILS = set(e.strip().lower() for e in CONFIG['calendar'].get('my_emails', []))
 
 # Colors
 BG_COLOR = (20, 25, 35)
@@ -83,6 +84,18 @@ def to_local_datetime(dt):
     return dt
 
 
+def get_my_partstat(vevent):
+    """Check RSVP status for any of my emails. Returns None if not an attendee."""
+    if not MY_EMAILS or not hasattr(vevent, 'attendee'):
+        return None
+    attendees = vevent.attendee if isinstance(vevent.attendee, list) else [vevent.attendee]
+    for attendee in attendees:
+        email = str(attendee.value).replace('mailto:', '').strip().lower()
+        if email in MY_EMAILS:
+            return attendee.params.get('PARTSTAT', ['NEEDS-ACTION'])[0]
+    return None
+
+
 def fetch_events(for_date):
     """Fetch events for a specific date."""
     events = []
@@ -106,6 +119,7 @@ def fetch_events(for_date):
                     ):
                         try:
                             vevent = event.vobject_instance.vevent
+                            partstat = get_my_partstat(vevent)
                             summary = str(vevent.summary.value) if hasattr(vevent, 'summary') else 'No title'
                             dtstart = vevent.dtstart.value
                             dtend = vevent.dtend.value if hasattr(vevent, 'dtend') else None
@@ -119,6 +133,7 @@ def fetch_events(for_date):
                                     'is_all_day': True,
                                     'is_tomorrow': for_date != date.today(),
                                     'colors': account_color,
+                                    'partstat': partstat,
                                 })
                             else:
                                 start_local = to_local_datetime(dtstart)
@@ -133,6 +148,7 @@ def fetch_events(for_date):
                                     'start': start_local, 'end': end_local, 'is_all_day': False,
                                     'is_tomorrow': for_date != date.today(),
                                     'colors': account_color,
+                                    'partstat': partstat,
                                 })
                         except:
                             pass
@@ -173,6 +189,17 @@ def get_event_state(event, now):
     if 0 < (event['start'] - now).total_seconds() <= 120:
         return 'upcoming'
     return 'normal'
+
+
+RSVP_COLORS = {
+    'ACCEPTED': (50, 200, 80),
+    'TENTATIVE': (220, 170, 30),
+    'NEEDS-ACTION': (220, 170, 30),
+    'DECLINED': (200, 50, 50),
+    None: (100, 100, 100),
+}
+RSVP_DOT_X = 10
+RSVP_DOT_RADIUS = 2
 
 
 def draw_gradient(draw, y_start, y_end):
@@ -250,6 +277,17 @@ def draw_screen(now, events, flash_on, fonts):
                 text_color = ac.get('today', TIME_COLOR)
             color = text_color
             title_color = text_color
+
+            # RSVP indicator dot
+            partstat = event.get('partstat')
+            rsvp_color = RSVP_COLORS.get(partstat, RSVP_COLORS[None])
+            if rsvp_color:
+                dot_y = (row_top + row_bottom) // 2
+                draw.ellipse(
+                    [(RSVP_DOT_X - RSVP_DOT_RADIUS, dot_y - RSVP_DOT_RADIUS),
+                     (RSVP_DOT_X + RSVP_DOT_RADIUS, dot_y + RSVP_DOT_RADIUS)],
+                    fill=rsvp_color,
+                )
 
             draw.text((25, text_y), event['time'], fill=color, font=fonts['event_time'], anchor='lm')
             time_width = fonts['event_time'].getlength(event['time'])
