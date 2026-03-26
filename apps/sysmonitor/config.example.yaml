@@ -1,0 +1,32 @@
+# System Monitor Display Configuration
+# Copy this file to config.yaml and adjust settings as needed
+
+# Display settings
+display:
+  # Serial port - use AUTO for auto-detection, or specify like /dev/ttyACM0 or COM3
+  com_port: "AUTO"
+  # Brightness 0-100 (warning: high brightness can cause heat on Rev A displays)
+  brightness: 50
+
+# How often to refresh the display (seconds, lower = more responsive but more CPU)
+refresh_rate: 1.0
+
+# Toggle sections on/off
+sections:
+  cpu: true
+  memory: true
+  disk: true
+  network: true
+  gpu: true          # auto-skipped if no NVIDIA GPU detected
+  processes: true
+
+# Disk settings
+disk:
+  mount_point: "/"
+  # ZFS pool name for pool-level usage stats (leave empty to use mount_point with psutil)
+  zfs_pool: ""
+
+# Network settings
+network:
+  # Set to "auto" to detect active interface, or specify like "enp5s0", "wlan0"
+  interface: "auto"

@@ -1,0 +1,26 @@
+# Spotify Now-Playing Display Configuration
+# Copy this file to config.yaml and fill in your credentials
+
+# Spotify API credentials
+# Create an app at https://developer.spotify.com/dashboard
+# Add the redirect_uri below to your app's "Redirect URIs" in the dashboard
+spotify:
+  client_id: "your-spotify-client-id"
+  client_secret: "your-spotify-client-secret"
+  redirect_uri: "http://127.0.0.1:8888/callback"
+
+# Display settings
+display:
+  # Serial port - use AUTO for auto-detection, or specify like /dev/ttyACM0 or COM3
+  com_port: "AUTO"
+  # Brightness 0-100 (warning: high brightness can cause heat on Rev A displays)
+  brightness: 50
+  # Brightness when paused for a while (auto-dim)
+  dim_brightness: 10
+  # Seconds of no playback before dimming (0 to disable)
+  dim_after: 300
+
+# Polling settings
+polling:
+  # How often to poll Spotify API (seconds) - lower = more responsive but more API calls
+  interval: 3

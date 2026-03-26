@@ -1,6 +1,9 @@
 # Config with credentials
 config.yaml
 
+# Spotify token cache
+.spotify_token_cache
+
 # Python
 __pycache__/
 *.py[cod]

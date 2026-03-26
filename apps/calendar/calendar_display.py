@@ -346,6 +346,7 @@ def main():
     lcd = LcdCommRevA(com_port=COM_PORT, display_width=320, display_height=480)
     lcd.SetBrightness(level=BRIGHTNESS)
     lcd.SetOrientation(Orientation.PORTRAIT)
+    lcd.DisplayPILImage(Image.new('RGB', (320, 480), (0, 0, 0)))
 
     fonts = {
         'bold': ImageFont.truetype(os.path.join(FONT_DIR, 'roboto/Roboto-Bold.ttf'), 22),

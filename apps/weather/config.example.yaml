@@ -1,0 +1,27 @@
+# Weather Display Configuration
+# Copy this file to config.yaml and fill in your API key and location
+
+# OpenWeatherMap settings
+openweathermap:
+  # Get a free API key at https://openweathermap.org/api
+  api_key: "your-api-key-here"
+  # Location coordinates (use https://openweathermap.org/find to look up)
+  latitude: 51.5074
+  longitude: -0.1278
+  # Units: "metric" (Celsius, m/s) or "imperial" (Fahrenheit, mph)
+  units: "metric"
+  # Optional: override city name displayed in header (otherwise uses API response)
+  city_name: ""
+
+# Display settings
+display:
+  # Serial port - use AUTO for auto-detection, or specify like /dev/ttyACM0 or COM3
+  com_port: "AUTO"
+  # Brightness 0-100 (warning: high brightness can cause heat on Rev A displays)
+  brightness: 50
+
+# Weather display settings
+weather:
+  # How often to refresh weather data from API (seconds, default 600 = 10 minutes)
+  # Free tier allows 1000 calls/day; 2 calls every 10 min = ~288/day
+  refresh_interval: 600
