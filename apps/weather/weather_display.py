@@ -41,59 +41,150 @@ REFRESH_INTERVAL = CONFIG['weather'].get('refresh_interval', 600)
 # Colors
 BG_COLOR = (20, 25, 35)
 TEXT_COLOR = (255, 255, 255)
-MUTED_COLOR = (150, 155, 165)
-LINE_COLOR = (60, 80, 100)
-LINE_COLOR_DARK = (40, 50, 65)
-HEADER_ACCENT = (100, 200, 255)
-RAIN_COLOR = (80, 150, 255)
-HUMIDITY_BAR_BG = (40, 50, 65)
-HUMIDITY_BAR_FG = (60, 160, 255)
-WIND_COLOR = (160, 220, 240)
-UV_LOW = (80, 200, 80)
-UV_MOD = (240, 200, 50)
-UV_HIGH = (255, 100, 50)
-UV_EXTREME = (200, 50, 200)
-PRESSURE_COLOR = (180, 180, 200)
-VISIBILITY_COLOR = (180, 200, 180)
-SECTION_LABEL_COLOR = (120, 140, 170)
+MUTED_COLOR = (110, 115, 130)
+LINE_COLOR = (45, 55, 70)
+RAIN_COLOR = (80, 160, 255)
+SUN_COLOR = (255, 200, 50)
+CLOUD_COLOR = (160, 170, 190)
+SUNRISE_COLOR = (255, 180, 60)
+SUNSET_COLOR = (200, 120, 60)
 
-# Weather condition symbols (ASCII, since Roboto lacks Unicode weather glyphs)
-CONDITION_SYMBOLS = {
-    'clear': '((',
-    'clouds': '))',
-    'rain': '//',
-    'drizzle': ',,',
-    'thunderstorm': '//!',
-    'snow': '**',
-    'mist': '~~',
-    'fog': '~~',
-    'haze': '~~',
-    'smoke': '~~',
-    'dust': '..',
-    'sand': '..',
-    'ash': '..',
-    'squall': '//!',
-    'tornado': '@@',
-}
+# Layout
+L = 10
+R = 310
+CX = 160
 
-# Layout constants
-HEADER_TOP = 0
-HEADER_BOTTOM = 135
-CONDITIONS_TOP = 140
-CONDITIONS_BOTTOM = 258
-HOURLY_TOP = 262
-HOURLY_BOTTOM = 368
-DAILY_TOP = 372
-DAILY_BOTTOM = 480
+# Section boundaries
+HEADER_BOTTOM = 110
+DETAILS_BOTTOM = 190
+HOURLY_BOTTOM = 300
+# Daily fills remaining to 480
 
 # Font paths
 FONT_DIR = os.path.join(ROOT_DIR, 'lib', 'turing-smart-screen', 'res', 'fonts')
 
 
+# === Weather Icons (drawn as geometric shapes) ===
+
+def draw_icon_sun(draw, cx, cy, r=7, color=SUN_COLOR):
+    """Draw a sun: filled circle with rays."""
+    draw.ellipse([(cx - r, cy - r), (cx + r, cy + r)], fill=color)
+    for angle in range(0, 360, 45):
+        dx = math.cos(math.radians(angle))
+        dy = math.sin(math.radians(angle))
+        draw.line([
+            (cx + dx * (r + 2), cy + dy * (r + 2)),
+            (cx + dx * (r + 5), cy + dy * (r + 5)),
+        ], fill=color, width=1)
+
+
+def draw_icon_cloud(draw, cx, cy, color=CLOUD_COLOR):
+    """Draw a cloud from overlapping ellipses."""
+    draw.ellipse([(cx - 9, cy - 3), (cx + 1, cy + 5)], fill=color)
+    draw.ellipse([(cx - 4, cy - 7), (cx + 6, cy + 2)], fill=color)
+    draw.ellipse([(cx + 1, cy - 3), (cx + 11, cy + 5)], fill=color)
+    draw.rectangle([(cx - 8, cy + 1), (cx + 10, cy + 5)], fill=color)
+
+
+def draw_icon_rain(draw, cx, cy):
+    """Draw cloud with rain drops."""
+    draw_icon_cloud(draw, cx, cy - 4, CLOUD_COLOR)
+    for dx in [-4, 2, 8]:
+        draw.line([(cx + dx, cy + 4), (cx + dx - 2, cy + 9)], fill=RAIN_COLOR, width=1)
+
+
+def draw_icon_drizzle(draw, cx, cy):
+    """Draw cloud with light dots."""
+    draw_icon_cloud(draw, cx, cy - 4, CLOUD_COLOR)
+    for dx in [-3, 3]:
+        draw.ellipse([(cx + dx - 1, cy + 5), (cx + dx + 1, cy + 7)], fill=RAIN_COLOR)
+
+
+def draw_icon_thunder(draw, cx, cy):
+    """Draw cloud with lightning bolt."""
+    draw_icon_cloud(draw, cx, cy - 5, CLOUD_COLOR)
+    # Lightning bolt
+    draw.polygon([(cx, cy + 1), (cx + 3, cy + 1), (cx + 1, cy + 5),
+                  (cx + 4, cy + 5), (cx - 1, cy + 11), (cx + 1, cy + 6),
+                  (cx - 2, cy + 6)], fill=(255, 220, 50))
+
+
+def draw_icon_snow(draw, cx, cy):
+    """Draw cloud with snowflakes."""
+    draw_icon_cloud(draw, cx, cy - 4, CLOUD_COLOR)
+    for dx in [-4, 2, 8]:
+        draw.ellipse([(cx + dx - 1, cy + 5), (cx + dx + 1, cy + 7)], fill=(200, 220, 255))
+
+
+def draw_icon_mist(draw, cx, cy):
+    """Draw horizontal wavy lines."""
+    for i, dy in enumerate([-4, 0, 4]):
+        w = 10 - i * 2
+        draw.line([(cx - w, cy + dy), (cx + w, cy + dy)], fill=MUTED_COLOR, width=1)
+
+
+def draw_icon_partial_cloud(draw, cx, cy):
+    """Draw sun partially behind cloud."""
+    draw_icon_sun(draw, cx - 3, cy - 3, r=6, color=SUN_COLOR)
+    draw_icon_cloud(draw, cx + 2, cy + 1, CLOUD_COLOR)
+
+
+def draw_weather_icon(draw, cx, cy, condition):
+    """Draw the appropriate weather icon for a condition string."""
+    key = condition.lower() if condition else 'clear'
+    if key == 'clear':
+        draw_icon_sun(draw, cx, cy)
+    elif key == 'clouds':
+        draw_icon_cloud(draw, cx, cy)
+    elif key == 'rain':
+        draw_icon_rain(draw, cx, cy)
+    elif key == 'drizzle':
+        draw_icon_drizzle(draw, cx, cy)
+    elif key == 'thunderstorm':
+        draw_icon_thunder(draw, cx, cy)
+    elif key == 'snow':
+        draw_icon_snow(draw, cx, cy)
+    elif key in ('mist', 'fog', 'haze', 'smoke'):
+        draw_icon_mist(draw, cx, cy)
+    else:
+        draw_icon_cloud(draw, cx, cy)
+
+
+def draw_weather_icon_small(draw, cx, cy, condition):
+    """Draw a smaller weather icon for forecast rows."""
+    key = condition.lower() if condition else 'clear'
+    if key == 'clear':
+        r = 4
+        draw.ellipse([(cx - r, cy - r), (cx + r, cy + r)], fill=SUN_COLOR)
+        for angle in range(0, 360, 60):
+            dx = math.cos(math.radians(angle))
+            dy = math.sin(math.radians(angle))
+            draw.line([
+                (cx + dx * (r + 1), cy + dy * (r + 1)),
+                (cx + dx * (r + 3), cy + dy * (r + 3)),
+            ], fill=SUN_COLOR, width=1)
+    elif key in ('rain', 'drizzle'):
+        # Tiny cloud + drops
+        draw.ellipse([(cx - 5, cy - 4), (cx + 5, cy + 1)], fill=CLOUD_COLOR)
+        for dx in [-2, 3]:
+            draw.line([(cx + dx, cy + 2), (cx + dx - 1, cy + 5)], fill=RAIN_COLOR, width=1)
+    elif key == 'thunderstorm':
+        draw.ellipse([(cx - 5, cy - 4), (cx + 5, cy + 1)], fill=CLOUD_COLOR)
+        draw.line([(cx, cy + 2), (cx - 1, cy + 6)], fill=(255, 220, 50), width=1)
+    elif key == 'snow':
+        draw.ellipse([(cx - 5, cy - 4), (cx + 5, cy + 1)], fill=CLOUD_COLOR)
+        draw.ellipse([(cx - 1, cy + 3), (cx + 1, cy + 5)], fill=(200, 220, 255))
+    elif key in ('mist', 'fog', 'haze', 'smoke'):
+        for dy in [-2, 1, 4]:
+            draw.line([(cx - 5, cy + dy), (cx + 5, cy + dy)], fill=MUTED_COLOR, width=1)
+    else:
+        draw.ellipse([(cx - 5, cy - 4), (cx + 5, cy + 1)], fill=CLOUD_COLOR)
+
+
+# === Utility functions ===
+
 def temp_color(temp_c):
-    """Return color based on temperature in Celsius."""
     if UNITS == 'imperial':
-        # Convert F to C for color thresholds
         temp_c = (temp_c - 32) * 5 / 9
     if temp_c < 5:
         return (80, 140, 255)
@@ -107,36 +198,10 @@ def temp_color(temp_c):
         return (255, 70, 50)
 
 
-def rain_prob_color(prob):
-    """Return color for rain probability (0.0-1.0)."""
-    intensity = int(80 + prob * 175)
-    return (60, min(intensity, 180), 255)
-
-
-def uv_color(uvi):
-    """Return color based on UV index."""
-    if uvi < 3:
-        return UV_LOW
-    elif uvi < 6:
-        return UV_MOD
-    elif uvi < 8:
-        return UV_HIGH
-    else:
-        return UV_EXTREME
-
-
 def wind_direction(deg):
-    """Convert wind degree to compass direction."""
     dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
             'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
-    idx = round(deg / 22.5) % 16
-    return dirs[idx]
-
-
-def get_condition_symbol(main_condition):
-    """Get a text symbol for a weather condition."""
-    key = main_condition.lower() if main_condition else 'clear'
-    return CONDITION_SYMBOLS.get(key, '?')
+    return dirs[round(deg / 22.5) % 16]
 
 
 def truncate_text(text, font, max_width):
@@ -148,18 +213,19 @@ def truncate_text(text, font, max_width):
 
 
 def format_temp(temp):
-    """Format temperature with unit symbol."""
     unit = 'F' if UNITS == 'imperial' else 'C'
     return f"{temp:.0f}°{unit}"
 
 
+def format_temp_short(temp):
+    return f"{temp:.0f}°"
+
+
+# === API functions ===
+
 def fetch_current_weather():
-    """Fetch current weather from OpenWeatherMap."""
     url = 'https://api.openweathermap.org/data/2.5/weather'
-    params = {
-        'lat': LAT, 'lon': LON,
-        'appid': API_KEY, 'units': UNITS,
-    }
+    params = {'lat': LAT, 'lon': LON, 'appid': API_KEY, 'units': UNITS}
     try:
         resp = requests.get(url, params=params, timeout=10)
         resp.raise_for_status()
@@ -170,12 +236,8 @@ def fetch_current_weather():
 
 
 def fetch_forecast():
-    """Fetch 5-day/3-hour forecast from OpenWeatherMap."""
     url = 'https://api.openweathermap.org/data/2.5/forecast'
-    params = {
-        'lat': LAT, 'lon': LON,
-        'appid': API_KEY, 'units': UNITS,
-    }
+    params = {'lat': LAT, 'lon': LON, 'appid': API_KEY, 'units': UNITS}
     try:
         resp = requests.get(url, params=params, timeout=10)
         resp.raise_for_status()
@@ -186,14 +248,10 @@ def fetch_forecast():
 
 
 def fetch_all_weather():
-    """Fetch current weather and forecast, return combined data dict."""
-    current = fetch_current_weather()
-    forecast = fetch_forecast()
-    return {'current': current, 'forecast': forecast}
+    return {'current': fetch_current_weather(), 'forecast': fetch_forecast()}
 
 
 def parse_hourly(forecast_data, count=8):
-    """Extract next N hourly-ish entries from 3-hour forecast."""
     if not forecast_data or 'list' not in forecast_data:
         return []
     now = datetime.now()
@@ -202,12 +260,10 @@ def parse_hourly(forecast_data, count=8):
         dt = datetime.fromtimestamp(item['dt'])
         if dt <= now:
             continue
-        pop = item.get('pop', 0)
-        temp = item['main']['temp']
         condition = item['weather'][0]['main'] if item.get('weather') else 'Clear'
         entries.append({
-            'time': dt, 'temp': temp, 'pop': pop,
-            'condition': condition, 'symbol': get_condition_symbol(condition),
+            'time': dt, 'temp': item['main']['temp'],
+            'pop': item.get('pop', 0), 'condition': condition,
         })
         if len(entries) >= count:
             break
@@ -215,7 +271,6 @@ def parse_hourly(forecast_data, count=8):
 
 
 def parse_daily(forecast_data, count=4):
-    """Aggregate 3-hour forecast into daily summaries."""
     if not forecast_data or 'list' not in forecast_data:
         return []
     today = datetime.now().date()
@@ -226,9 +281,7 @@ def parse_daily(forecast_data, count=4):
         if d <= today:
             continue
         if d not in days:
-            days[d] = {
-                'date': d, 'temps': [], 'pops': [], 'conditions': [],
-            }
+            days[d] = {'date': d, 'temps': [], 'pops': [], 'conditions': []}
         days[d]['temps'].append(item['main']['temp'])
         days[d]['pops'].append(item.get('pop', 0))
         days[d]['conditions'].append(item['weather'][0]['main'] if item.get('weather') else 'Clear')
@@ -236,254 +289,240 @@ def parse_daily(forecast_data, count=4):
     result = []
     for d in sorted(days.keys()):
         info = days[d]
-        # Most common condition
         cond_counts = {}
         for c in info['conditions']:
             cond_counts[c] = cond_counts.get(c, 0) + 1
         main_cond = max(cond_counts, key=cond_counts.get)
         result.append({
-            'date': d,
-            'high': max(info['temps']),
-            'low': min(info['temps']),
-            'pop': max(info['pops']),
-            'condition': main_cond,
-            'symbol': get_condition_symbol(main_cond),
+            'date': d, 'high': max(info['temps']), 'low': min(info['temps']),
+            'pop': min(1.0, max(info['pops'])), 'condition': main_cond,
         })
         if len(result) >= count:
             break
     return result
 
 
-def draw_gradient(draw, y_start, y_end):
-    """Draw header gradient matching calendar app style."""
-    for y in range(y_start, y_end):
-        progress = y / 150
-        r = int(35 * (1 - progress * 0.5))
-        g = int(45 * (1 - progress * 0.5))
-        b = int(65 * (1 - progress * 0.5))
-        draw.line([(0, y), (320, y)], fill=(r, g, b))
-
+# === Drawing functions ===
 
 def draw_header(draw, fonts, current, now):
-    """Draw the header section with current weather."""
-    draw_gradient(draw, HEADER_TOP, HEADER_BOTTOM + 5)
-
+    """Header: icon + hero temp + condition + feels like + city/time."""
     if not current:
-        draw.text((160, 70), 'Loading...', fill=MUTED_COLOR, font=fonts['bold'], anchor='mm')
+        draw.text((CX, 50), 'Loading...', fill=MUTED_COLOR, font=fonts['medium'], anchor='mm')
         return
 
     weather = current.get('weather', [{}])[0]
     main_data = current.get('main', {})
-    condition_text = weather.get('description', 'Unknown').title()
     condition_main = weather.get('main', 'Clear')
+    condition_text = weather.get('description', 'Unknown').title()
     temp = main_data.get('temp', 0)
     feels_like = main_data.get('feels_like', 0)
 
-    # City name
+    # Top row: city left, time right
     city = CITY_NAME or current.get('name', 'Unknown')
-    draw.text((160, 16), city, fill=MUTED_COLOR, font=fonts['small'], anchor='mm')
+    draw.text((L, 6), city, fill=MUTED_COLOR, font=fonts['small'], anchor='lt')
+    draw.text((R, 6), now.strftime('%H:%M'), fill=MUTED_COLOR, font=fonts['small_mono'], anchor='rt')
 
-    # Current temperature (large, prominent)
-    temp_str = format_temp(temp)
-    draw.text((160, 56), temp_str, fill=temp_color(temp), font=fonts['temp_large'], anchor='mm')
+    # Weather icon left of temp
+    draw_weather_icon(draw, 42, 46, condition_main)
 
-    # Condition text
-    draw.text((160, 92), condition_text, fill=TEXT_COLOR, font=fonts['medium'], anchor='mm')
+    # Hero temperature
+    draw.text((CX + 20, 46), format_temp(temp), fill=temp_color(temp), font=fonts['temp_hero'], anchor='mm')
+
+    # Condition
+    draw.text((CX, 78), condition_text, fill=TEXT_COLOR, font=fonts['medium'], anchor='mm')
 
     # Feels like
-    feels_str = f"Feels like {format_temp(feels_like)}"
-    draw.text((160, 114), feels_str, fill=MUTED_COLOR, font=fonts['small'], anchor='mm')
-
-    # Time in top-right corner
-    time_str = now.strftime('%H:%M')
-    draw.text((305, 16), time_str, fill=HEADER_ACCENT, font=fonts['small_mono'], anchor='rm')
+    draw.text((CX, 98), f"Feels like {format_temp(feels_like)}", fill=MUTED_COLOR, font=fonts['small'], anchor='mm')
 
 
-def draw_conditions(draw, fonts, current):
-    """Draw current conditions section."""
+def draw_details(draw, fonts, current):
+    """Current conditions: 2 rows x 3 columns."""
     if not current:
         return
 
-    y_base = CONDITIONS_TOP
     main_data = current.get('main', {})
     wind_data = current.get('wind', {})
+    sys_data = current.get('sys', {})
     vis = current.get('visibility', 10000)
+    clouds = current.get('clouds', {}).get('all', 0)
 
-    # Section label
-    draw.text((15, y_base + 2), 'CONDITIONS', fill=SECTION_LABEL_COLOR, font=fonts['tiny'], anchor='lt')
-    draw.line([(15, y_base + 16), (305, y_base + 16)], fill=LINE_COLOR_DARK, width=1)
-
-    row_y = y_base + 24
-    row_h = 24
-    col_mid = 160
-
-    # Row 1: Humidity + Wind
     humidity = main_data.get('humidity', 0)
-    draw.text((15, row_y), 'Humidity', fill=MUTED_COLOR, font=fonts['tiny'], anchor='lt')
-    # Humidity bar
-    bar_x = 70
-    bar_w = 60
-    bar_h = 8
-    bar_y = row_y + 4
-    draw.rectangle([(bar_x, bar_y), (bar_x + bar_w, bar_y + bar_h)], fill=HUMIDITY_BAR_BG)
-    fill_w = int(bar_w * humidity / 100)
-    if fill_w > 0:
-        draw.rectangle([(bar_x, bar_y), (bar_x + fill_w, bar_y + bar_h)], fill=HUMIDITY_BAR_FG)
-    draw.text((bar_x + bar_w + 5, row_y), f'{humidity}%', fill=TEXT_COLOR, font=fonts['tiny'], anchor='lt')
-
-    # Wind
     wind_speed = wind_data.get('speed', 0)
     wind_deg = wind_data.get('deg', 0)
     wind_dir = wind_direction(wind_deg)
-    speed_unit = 'mph' if UNITS == 'imperial' else 'm/s'
-    wind_str = f'{wind_speed:.0f}{speed_unit} {wind_dir}'
-    draw.text((col_mid + 5, row_y), 'Wind', fill=MUTED_COLOR, font=fonts['tiny'], anchor='lt')
-    draw.text((col_mid + 40, row_y), wind_str, fill=WIND_COLOR, font=fonts['tiny'], anchor='lt')
-
-    row_y += row_h
-
-    # Row 2: Pressure + Visibility
     pressure = main_data.get('pressure', 0)
-    draw.text((15, row_y), 'Pressure', fill=MUTED_COLOR, font=fonts['tiny'], anchor='lt')
-    draw.text((70, row_y), f'{pressure}hPa', fill=PRESSURE_COLOR, font=fonts['tiny'], anchor='lt')
+    speed_unit = 'mph' if UNITS == 'imperial' else 'm/s'
 
-    vis_km = vis / 1000
-    if UNITS == 'imperial':
-        vis_str = f'{vis_km * 0.621:.1f}mi'
-    else:
-        vis_str = f'{vis_km:.1f}km'
-    draw.text((col_mid + 5, row_y), 'Visibility', fill=MUTED_COLOR, font=fonts['tiny'], anchor='lt')
-    draw.text((col_mid + 62, row_y), vis_str, fill=VISIBILITY_COLOR, font=fonts['tiny'], anchor='lt')
-
-    row_y += row_h
-
-    # Row 3: Wind gust + Cloudiness
-    gust = wind_data.get('gust')
-    if gust:
-        draw.text((15, row_y), 'Gust', fill=MUTED_COLOR, font=fonts['tiny'], anchor='lt')
-        draw.text((70, row_y), f'{gust:.0f}{speed_unit}', fill=WIND_COLOR, font=fonts['tiny'], anchor='lt')
-
-    clouds = current.get('clouds', {}).get('all', 0)
-    draw.text((col_mid + 5, row_y), 'Clouds', fill=MUTED_COLOR, font=fonts['tiny'], anchor='lt')
-    draw.text((col_mid + 48, row_y), f'{clouds}%', fill=MUTED_COLOR, font=fonts['tiny'], anchor='lt')
-
-    row_y += row_h
-
-    # Row 4: Sunrise/Sunset
-    sys_data = current.get('sys', {})
     sunrise = sys_data.get('sunrise')
     sunset = sys_data.get('sunset')
-    if sunrise:
-        sr = datetime.fromtimestamp(sunrise).strftime('%H:%M')
-        draw.text((15, row_y), 'Rise', fill=MUTED_COLOR, font=fonts['tiny'], anchor='lt')
-        draw.text((70, row_y), sr, fill=(255, 200, 80), font=fonts['tiny'], anchor='lt')
-    if sunset:
-        ss = datetime.fromtimestamp(sunset).strftime('%H:%M')
-        draw.text((col_mid + 5, row_y), 'Set', fill=MUTED_COLOR, font=fonts['tiny'], anchor='lt')
-        draw.text((col_mid + 32, row_y), ss, fill=(255, 140, 60), font=fonts['tiny'], anchor='lt')
+    sr_str = datetime.fromtimestamp(sunrise).strftime('%H:%M') if sunrise else '--:--'
+    ss_str = datetime.fromtimestamp(sunset).strftime('%H:%M') if sunset else '--:--'
+
+    if UNITS == 'imperial':
+        vis_str = f'{vis / 1000 * 0.621:.1f}mi'
+    else:
+        vis_str = f'{vis / 1000:.1f}km'
+
+    y = HEADER_BOTTOM + 6
+    cols = [L + 50, CX, R - 50]
+
+    # Row 1
+    for i, (label, val) in enumerate([
+        ('HUMIDITY', f'{humidity}%'),
+        ('WIND', f'{wind_speed:.0f}{speed_unit} {wind_dir}'),
+        ('PRESSURE', f'{pressure}'),
+    ]):
+        draw.text((cols[i], y), label, fill=MUTED_COLOR, font=fonts['label'], anchor='mt')
+        draw.text((cols[i], y + 13), val, fill=TEXT_COLOR, font=fonts['value_mono'], anchor='mt')
+
+    # Row 2
+    y2 = y + 34
+    for i, (label, val, color) in enumerate([
+        ('VISIBILITY', vis_str, TEXT_COLOR),
+        ('SUNRISE', sr_str, SUNRISE_COLOR),
+        ('SUNSET', ss_str, SUNSET_COLOR),
+    ]):
+        draw.text((cols[i], y2), label, fill=MUTED_COLOR, font=fonts['label'], anchor='mt')
+        draw.text((cols[i], y2 + 13), val, fill=color, font=fonts['value_mono'], anchor='mt')
 
 
 def draw_hourly(draw, fonts, hourly):
-    """Draw hourly forecast section."""
-    y_base = HOURLY_TOP
-
-    draw.text((15, y_base + 2), 'HOURLY', fill=SECTION_LABEL_COLOR, font=fonts['tiny'], anchor='lt')
-    draw.line([(15, y_base + 16), (305, y_base + 16)], fill=LINE_COLOR_DARK, width=1)
+    """Hourly forecast: 2 columns of 4, with icons."""
+    y_base = DETAILS_BOTTOM + 6
+    draw.text((L, y_base), 'HOURLY', fill=MUTED_COLOR, font=fonts['label'], anchor='lt')
 
     if not hourly:
-        draw.text((160, y_base + 50), 'No data', fill=MUTED_COLOR, font=fonts['small'], anchor='mm')
+        draw.text((CX, y_base + 50), 'No data', fill=MUTED_COLOR, font=fonts['small'], anchor='mm')
         return
 
-    # Show up to 8 hours in 2 rows of 4
-    row_y = y_base + 22
-    col_w = 73  # 4 columns across ~292px usable
-    entries = hourly[:8]
+    row_h = 22
+    list_top = y_base + 16
+    col_left = L
+    col_right = CX + 8
 
-    for i, entry in enumerate(entries):
-        row = i // 4
-        col = i % 4
-        cx = 15 + col * col_w + col_w // 2
-        cy = row_y + row * 44
+    col_width = (R - L) // 2
+    for i, entry in enumerate(hourly[:8]):
+        col = i // 4
+        row = i % 4
+        x = col_left if col == 0 else col_right
+        y = list_top + row * row_h
+        col_end = x + col_width - 8
+
+        # Small icon
+        draw_weather_icon_small(draw, x + 6, y + 6, entry['condition'])
 
         # Time
-        time_str = entry['time'].strftime('%H:%M')
-        draw.text((cx, cy), time_str, fill=MUTED_COLOR, font=fonts['tiny'], anchor='mt')
+        draw.text((x + 18, y), entry['time'].strftime('%H:%M'), fill=MUTED_COLOR, font=fonts['small_mono'], anchor='lt')
 
-        # Temp
-        t_str = f"{entry['temp']:.0f}"
-        unit = 'F' if UNITS == 'imperial' else 'C'
-        draw.text((cx, cy + 14), f'{t_str}°{unit}', fill=temp_color(entry['temp']), font=fonts['small_mono'], anchor='mt')
+        # Temp (right-aligned within column to handle negatives)
+        t_str = format_temp_short(entry['temp'])
+        draw.text((x + 90, y), t_str, fill=temp_color(entry['temp']), font=fonts['value_mono'], anchor='rt')
 
-        # Rain probability
+        # Rain % (only if >=10%, with drop indicator)
         pop = entry['pop']
-        if pop > 0.05:
+        if pop >= 0.10:
             pop_str = f'{int(pop * 100)}%'
-            draw.text((cx, cy + 29), pop_str, fill=rain_prob_color(pop), font=fonts['tiny'], anchor='mt')
+            draw.text((col_end, y), pop_str, fill=RAIN_COLOR, font=fonts['small_mono'], anchor='rt')
 
 
 def draw_daily(draw, fonts, daily):
-    """Draw daily forecast section."""
-    y_base = DAILY_TOP
-
-    draw.text((15, y_base + 2), 'FORECAST', fill=SECTION_LABEL_COLOR, font=fonts['tiny'], anchor='lt')
-    draw.line([(15, y_base + 16), (305, y_base + 16)], fill=LINE_COLOR_DARK, width=1)
+    """Daily forecast: compact rows with icons."""
+    y_base = HOURLY_BOTTOM + 6
+    draw.text((L, y_base), 'FORECAST', fill=MUTED_COLOR, font=fonts['label'], anchor='lt')
 
     if not daily:
-        draw.text((160, y_base + 50), 'No data', fill=MUTED_COLOR, font=fonts['small'], anchor='mm')
+        draw.text((CX, y_base + 50), 'No data', fill=MUTED_COLOR, font=fonts['small'], anchor='mm')
         return
 
-    row_y = y_base + 22
     row_h = 24
+    list_top = y_base + 16
+    days = daily[:4]
 
-    for i, day in enumerate(daily[:4]):
-        y = row_y + i * row_h
+    # Calculate global temp range for bar scaling
+    all_lows = [d['low'] for d in days]
+    all_highs = [d['high'] for d in days]
+    global_min = min(all_lows) if all_lows else 0
+    global_max = max(all_highs) if all_highs else 10
+    temp_span = max(1, global_max - global_min)
+
+    # Layout columns: Day  Icon  Low  [---bar---]  High  Rain%
+    icon_cx = 52
+    low_x = 95        # low temp right-aligned here
+    bar_left = 102
+    bar_right = 226
+    high_x = 232      # high temp left-aligned here
+    rain_x = R         # rain % right-aligned here
+    bar_width = bar_right - bar_left
+    bar_h = 6
+
+    for i, day in enumerate(days):
+        y = list_top + i * row_h
+        row_cy = y + 7
 
         # Day name
-        day_name = day['date'].strftime('%a')
-        draw.text((15, y), day_name, fill=TEXT_COLOR, font=fonts['small'], anchor='lt')
+        draw.text((L, y), day['date'].strftime('%a'), fill=TEXT_COLOR, font=fonts['medium'], anchor='lt')
 
-        # Condition symbol
-        draw.text((60, y), day['symbol'], fill=HEADER_ACCENT, font=fonts['small'], anchor='lt')
+        # Icon
+        draw_weather_icon_small(draw, icon_cx, row_cy, day['condition'])
 
-        # High / Low
-        high_str = f"{day['high']:.0f}"
-        low_str = f"{day['low']:.0f}"
-        draw.text((90, y), high_str, fill=temp_color(day['high']), font=fonts['small_mono'], anchor='lt')
-        draw.text((130, y), '/', fill=MUTED_COLOR, font=fonts['small'], anchor='lt')
-        draw.text((140, y), low_str, fill=temp_color(day['low']), font=fonts['small_mono'], anchor='lt')
+        # Low temp (right-aligned, before bar)
+        draw.text((low_x, y), format_temp_short(day['low']), fill=MUTED_COLOR, font=fonts['small_mono'], anchor='rt')
 
-        # Condition text
-        cond = truncate_text(day['condition'], fonts['tiny'], 85)
-        draw.text((185, y + 2), cond, fill=MUTED_COLOR, font=fonts['tiny'], anchor='lt')
+        # Temp range bar
+        bar_y = row_cy - bar_h // 2
+        draw.rounded_rectangle(
+            [(bar_left, bar_y), (bar_right, bar_y + bar_h)],
+            radius=3, fill=LINE_COLOR,
+        )
+        low_frac = (day['low'] - global_min) / temp_span
+        high_frac = (day['high'] - global_min) / temp_span
+        fill_x1 = bar_left + int(low_frac * bar_width)
+        fill_x2 = bar_left + int(high_frac * bar_width)
+        if fill_x2 > fill_x1:
+            low_col = temp_color(day['low'])
+            high_col = temp_color(day['high'])
+            mid_col = (
+                (low_col[0] + high_col[0]) // 2,
+                (low_col[1] + high_col[1]) // 2,
+                (low_col[2] + high_col[2]) // 2,
+            )
+            draw.rounded_rectangle(
+                [(fill_x1, bar_y), (fill_x2, bar_y + bar_h)],
+                radius=3, fill=mid_col,
+            )
 
-        # Rain probability
+        # High temp (left-aligned, after bar)
+        draw.text((high_x, y), format_temp_short(day['high']), fill=temp_color(day['high']), font=fonts['small_mono'], anchor='lt')
+
+        # Rain % (right-aligned, only if >=10%)
         pop = min(1.0, day['pop'])
-        if pop > 0.05:
-            pop_str = f'{int(pop * 100)}%'
-            draw.text((280, y + 2), pop_str, fill=rain_prob_color(pop), font=fonts['tiny'], anchor='lt')
+        if pop >= 0.10:
+            draw.text((rain_x, y), f'{int(pop * 100)}%', fill=RAIN_COLOR, font=fonts['small_mono'], anchor='rt')
+
+    # Extra info below forecast if space permits
+    extra_y = list_top + len(daily[:4]) * row_h + 12
+    if extra_y < 465:
+        draw.line([(L, extra_y - 4), (R, extra_y - 4)], fill=LINE_COLOR, width=1)
+        draw.text((CX, extra_y + 6), f'Updated {datetime.now().strftime("%H:%M")}', fill=MUTED_COLOR, font=fonts['label'], anchor='mt')
 
 
 def draw_screen(now, weather_data, fonts):
-    """Draw the complete weather screen."""
     img = Image.new('RGB', (320, 480), BG_COLOR)
     draw = ImageDraw.Draw(img)
 
     current = weather_data.get('current')
     forecast = weather_data.get('forecast')
-
-    # Parse forecast data
     hourly = parse_hourly(forecast, count=8)
     daily = parse_daily(forecast, count=4)
 
-    # Draw sections
     draw_header(draw, fonts, current, now)
-    draw.line([(15, HEADER_BOTTOM), (305, HEADER_BOTTOM)], fill=LINE_COLOR, width=1)
+    draw.line([(L, HEADER_BOTTOM), (R, HEADER_BOTTOM)], fill=LINE_COLOR, width=1)
 
-    draw_conditions(draw, fonts, current)
-    draw.line([(15, CONDITIONS_BOTTOM), (305, CONDITIONS_BOTTOM)], fill=LINE_COLOR_DARK, width=1)
+    draw_details(draw, fonts, current)
+    draw.line([(L, DETAILS_BOTTOM), (R, DETAILS_BOTTOM)], fill=LINE_COLOR, width=1)
 
     draw_hourly(draw, fonts, hourly)
-    draw.line([(15, HOURLY_BOTTOM), (305, HOURLY_BOTTOM)], fill=LINE_COLOR_DARK, width=1)
+    draw.line([(L, HOURLY_BOTTOM), (R, HOURLY_BOTTOM)], fill=LINE_COLOR, width=1)
 
     draw_daily(draw, fonts, daily)
 
@@ -491,29 +530,21 @@ def draw_screen(now, weather_data, fonts):
 
 
 def find_changed_rows(old_img, new_img):
-    """Find rows that differ between two images."""
     old_arr = np.array(old_img)
     new_arr = np.array(new_img)
-
     diff = np.any(old_arr != new_arr, axis=(1, 2))
     changed_rows = np.where(diff)[0]
-
     if len(changed_rows) == 0:
         return []
-
     regions = []
-    start = changed_rows[0]
-    end = changed_rows[0]
-
+    start = end = changed_rows[0]
     for row in changed_rows[1:]:
         if row == end + 1:
             end = row
         else:
             regions.append((start, end + 1))
-            start = row
-            end = row
+            start = end = row
     regions.append((start, end + 1))
-
     return regions
 
 
@@ -523,7 +554,6 @@ def main():
     print(f'  Units: {UNITS}')
     print(f'  COM port: {COM_PORT}')
     print(f'  Brightness: {BRIGHTNESS}%')
-    print(f'  Refresh interval: {REFRESH_INTERVAL}s')
 
     print('Connecting to display...')
     lcd = LcdCommRevA(com_port=COM_PORT, display_width=320, display_height=480)
@@ -532,13 +562,12 @@ def main():
     lcd.DisplayPILImage(Image.new('RGB', (320, 480), (0, 0, 0)))
 
     fonts = {
-        'temp_large': ImageFont.truetype(os.path.join(FONT_DIR, 'roboto/Roboto-Bold.ttf'), 42),
-        'bold': ImageFont.truetype(os.path.join(FONT_DIR, 'roboto/Roboto-Bold.ttf'), 22),
-        'medium': ImageFont.truetype(os.path.join(FONT_DIR, 'roboto/Roboto-Medium.ttf'), 18),
-        'small': ImageFont.truetype(os.path.join(FONT_DIR, 'roboto/Roboto-Regular.ttf'), 16),
-        'tiny': ImageFont.truetype(os.path.join(FONT_DIR, 'roboto/Roboto-Regular.ttf'), 13),
-        'small_mono': ImageFont.truetype(os.path.join(FONT_DIR, 'roboto-mono/RobotoMono-Medium.ttf'), 14),
-        'symbol': ImageFont.truetype(os.path.join(FONT_DIR, 'roboto/Roboto-Bold.ttf'), 28),
+        'temp_hero': ImageFont.truetype(os.path.join(FONT_DIR, 'roboto-mono/RobotoMono-Bold.ttf'), 48),
+        'medium': ImageFont.truetype(os.path.join(FONT_DIR, 'roboto/Roboto-Medium.ttf'), 16),
+        'small': ImageFont.truetype(os.path.join(FONT_DIR, 'roboto/Roboto-Regular.ttf'), 13),
+        'label': ImageFont.truetype(os.path.join(FONT_DIR, 'roboto/Roboto-Medium.ttf'), 10),
+        'small_mono': ImageFont.truetype(os.path.join(FONT_DIR, 'roboto-mono/RobotoMono-Medium.ttf'), 13),
+        'value_mono': ImageFont.truetype(os.path.join(FONT_DIR, 'roboto-mono/RobotoMono-Medium.ttf'), 15),
     }
 
     print('Fetching weather data...')
@@ -551,7 +580,6 @@ def main():
     last_fetch = time_module.time()
     last_second = -1
 
-    # Initial draw
     now = datetime.now()
     current_img = draw_screen(now, weather_data, fonts)
     lcd.DisplayPILImage(current_img)
@@ -563,24 +591,18 @@ def main():
             now = datetime.now()
             current_time = time_module.time()
 
-            # Refresh weather data periodically
             if current_time - last_fetch > REFRESH_INTERVAL:
                 last_fetch = current_time
                 print(f'Refreshing weather data at {now.strftime("%H:%M:%S")}...')
                 weather_data = fetch_all_weather()
 
-            # Only redraw when the second changes (time display updates)
             if now.second != last_second:
                 last_second = now.second
-
                 current_img = draw_screen(now, weather_data, fonts)
-
                 regions = find_changed_rows(prev_img, current_img)
-
                 for y_start, y_end in regions:
                     region = current_img.crop((0, y_start, 320, y_end))
                     lcd.DisplayPILImage(region, x=0, y=y_start)
-
                 prev_img = current_img.copy()
 
             time_module.sleep(0.05)
