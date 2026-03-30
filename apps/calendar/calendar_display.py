@@ -38,6 +38,7 @@ REFRESH_INTERVAL = CONFIG['calendar'].get('refresh_interval', 300)
 TOMORROW_THRESHOLD = CONFIG['calendar'].get('tomorrow_threshold', 5)
 EXCLUDED_CALENDARS = set(name.strip().lower() for name in CONFIG['calendar'].get('excluded_calendars', []))
 MY_EMAILS = set(e.strip().lower() for e in CONFIG['calendar'].get('my_emails', []))
+MY_EMAILS.update(acc['email'].strip().lower() for acc in CONFIG['accounts'])
 HIDE_DECLINED = CONFIG['calendar'].get('hide_declined', False)
 
 # Colors
@@ -87,14 +88,24 @@ def to_local_datetime(dt):
 
 def get_my_partstat(vevent):
     """Check RSVP status for any of my emails. Returns None if not an attendee."""
-    if not MY_EMAILS or not hasattr(vevent, 'attendee'):
+    if not hasattr(vevent, 'attendee'):
         return None
     attendees = vevent.attendee if isinstance(vevent.attendee, list) else [vevent.attendee]
-    for attendee in attendees:
-        email = str(attendee.value).replace('mailto:', '').strip().lower()
-        if email in MY_EMAILS:
-            return attendee.params.get('PARTSTAT', ['NEEDS-ACTION'])[0]
-    return None
+    if MY_EMAILS:
+        for attendee in attendees:
+            email = str(attendee.value).replace('mailto:', '').strip().lower()
+            if email in MY_EMAILS:
+                return attendee.params.get('PARTSTAT', ['NEEDS-ACTION'])[0]
+    # Event has attendees but we're not listed — check if we're the organizer
+    # (organizers are implicitly accepted), or if it's on our calendar we've
+    # accepted since Fastmail/JMAP strips the owner from the attendee list
+    if hasattr(vevent, 'organizer'):
+        org_email = str(vevent.organizer.value).replace('mailto:', '').strip().lower()
+        if org_email in MY_EMAILS:
+            return 'ACCEPTED'
+    # On our calendar with attendees but we're not listed — Fastmail strips
+    # the calendar owner from attendees, so treat as accepted
+    return 'ACCEPTED'
 
 
 def fetch_events(for_date):
