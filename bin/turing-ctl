@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+"""Control client for the unified Turing display runner.
+
+Usage:
+  turing-ctl next
+  turing-ctl prev
+  turing-ctl switch <app>     (alias: show)
+  turing-ctl current
+  turing-ctl list
+  turing-ctl status
+
+The socket path defaults to $XDG_RUNTIME_DIR/turing-display.sock and can be
+overridden with --socket or $TURING_SOCKET.
+"""
+
+import argparse
+import os
+import sys
+
+# Make the turing_display package importable regardless of cwd.
+_BIN_DIR = os.path.dirname(os.path.abspath(__file__))
+_ROOT_DIR = os.path.dirname(_BIN_DIR)
+if _ROOT_DIR not in sys.path:
+    sys.path.insert(0, _ROOT_DIR)
+
+from turing_display.control import send_command, default_socket_path
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Control the Turing display runner.')
+    parser.add_argument('--socket', default=os.environ.get('TURING_SOCKET'),
+                        help='control socket path')
+    parser.add_argument('command',
+                        choices=['next', 'prev', 'switch', 'show',
+                                 'current', 'list', 'status'])
+    parser.add_argument('args', nargs='*', help='command arguments (e.g. app name)')
+    opts = parser.parse_args()
+
+    sock_path = opts.socket or default_socket_path()
+    try:
+        reply = send_command(sock_path, [opts.command, *opts.args])
+    except (ConnectionRefusedError, FileNotFoundError):
+        print(f'error: runner not reachable at {sock_path}', file=sys.stderr)
+        return 2
+    except OSError as e:
+        print(f'error: {e}', file=sys.stderr)
+        return 2
+
+    print(reply)
+    return 1 if reply.startswith('ERR') else 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

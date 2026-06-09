@@ -1,0 +1,19 @@
+[Unit]
+Description=Turing 3.5" smart-screen display runner
+After=graphical-session.target
+
+[Service]
+Type=simple
+# Adjust WorkingDirectory to wherever you cloned the repo.
+WorkingDirectory=%h/Source/turing-display-apps
+# Run via `sg uucp` so the process has serial-port group access even if the
+# systemd user manager wasn't started with the uucp supplementary group.
+ExecStart=/usr/bin/sg uucp -c '%h/Source/turing-display-apps/venv/bin/python -m turing_display'
+Restart=on-failure
+RestartSec=3
+# Clean stop via SIGTERM (restores brightness, blanks the panel, removes the socket).
+KillSignal=SIGTERM
+TimeoutStopSec=10
+
+[Install]
+WantedBy=default.target

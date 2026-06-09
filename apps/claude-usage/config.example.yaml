@@ -1,0 +1,21 @@
+# Claude Usage Display Configuration
+# Copy this file to config.yaml and adjust settings
+
+# Display settings
+display:
+  # Serial port - use AUTO for auto-detection, or specify like /dev/ttyACM0 or COM3
+  com_port: "AUTO"
+  # Brightness 0-100 (warning: high brightness can cause heat on Rev A displays)
+  brightness: 50
+
+# Claude settings
+claude:
+  # Path to Claude Code credentials file (default: ~/.claude/.credentials.json)
+  credentials_path: "~/.claude/.credentials.json"
+  # How often to poll usage data (seconds) - no API cost, reads from claude.ai
+  poll_interval: 60
+  # Organization ID (auto-detected from browser cookies if empty)
+  org_id: ""
+  # Firefox profile path (auto-detected if empty)
+  # Can be a directory or direct path to cookies.sqlite
+  firefox_profile: ""

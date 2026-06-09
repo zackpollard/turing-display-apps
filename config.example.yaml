@@ -1,0 +1,80 @@
+# Unified Turing display runner configuration.
+# Copy this file to config.yaml (gitignored) and fill in your own values.
+#
+#   cp config.example.yaml config.yaml
+#
+# config.yaml holds credentials (Fastmail app passwords, Spotify secrets, ...)
+# and must never be committed.
+
+display:
+  com_port: "AUTO"     # AUTO, or an explicit port e.g. /dev/ttyACM0
+  brightness: 50       # 0-100 (high brightness can heat Rev A panels)
+
+runner:
+  # The app shown on startup.
+  default_app: sysmonitor
+  # Cycle order for `turing-ctl next` / `prev`. Apps not listed here are not loaded.
+  order: [sysmonitor, weather, calendar, spotify, claude_usage]
+  # Control socket. Empty -> $XDG_RUNTIME_DIR/turing-display.sock
+  socket_path: ""
+
+apps:
+  # Each app gets its own section. `keep_warm: true` keeps an app polling its
+  # data source even while hidden, so a switch to it shows fresh data instantly
+  # (costs background network/CPU). Default is lazy: only the visible app polls,
+  # and a switch triggers an immediate refresh.
+
+  sysmonitor:
+    keep_warm: false
+    refresh_rate: 1.0
+    sections:
+      cpu: true
+      memory: true
+      disk: true
+      network: true
+      gpu: true          # auto-skipped if no NVIDIA GPU detected
+      processes: true
+    disk:
+      mount_point: "/"
+      zfs_pool: ""        # ZFS pool name for pool-level stats, or "" for psutil
+    network:
+      interface: "auto"   # "auto" or e.g. "enp5s0", "wlan0"
+
+  weather:
+    keep_warm: false
+    refresh_interval: 600
+    openweathermap:
+      api_key: "YOUR_OPENWEATHERMAP_API_KEY"
+      latitude: 0.0
+      longitude: 0.0
+      units: "metric"     # metric or imperial
+      city_name: "Your City"
+
+  calendar:
+    keep_warm: true
+    refresh_interval: 300
+    tomorrow_threshold: 5
+    excluded_calendars: []
+    my_emails: []         # your addresses, for RSVP-status detection
+    accounts:
+      - email: "you@fastmail.com"
+        password: "FASTMAIL_APP_PASSWORD"
+        colors:           # optional per-account overrides
+          today: [255, 180, 100]
+          tomorrow: [180, 120, 60]
+
+  spotify:
+    keep_warm: false
+    poll_interval: 3
+    dim_brightness: 10    # brightness while paused (after dim_after seconds)
+    dim_after: 300
+    client_id: "YOUR_SPOTIFY_CLIENT_ID"
+    client_secret: "YOUR_SPOTIFY_CLIENT_SECRET"
+    redirect_uri: "http://127.0.0.1:8888/callback"
+
+  claude_usage:
+    keep_warm: false
+    credentials_path: "~/.claude/.credentials.json"
+    poll_interval: 60
+    org_id: "YOUR_ANTHROPIC_ORG_ID"
+    firefox_profile: ""   # optional explicit Firefox profile path
